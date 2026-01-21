@@ -1,0 +1,33 @@
+name: Live Stream Manual Input
+
+on:
+  workflow_dispatch:
+    inputs:
+      rtmp_url:
+        description: 'Masukkan URL RTMP (Contoh: rtmp://a.rtmp.youtube.com/live2/)'
+        required: true
+        default: 'rtmp://a.rtmp.youtube.com/live2/'
+      stream_key:
+        description: 'Masukkan Stream Key Anda'
+        required: true
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Start Streaming with Silent Audio
+        run: |
+          # Perintah ini menggabungkan gambar dengan generator audio hening (anullsrc)
+          ffmpeg -re -loop 1 -i "thumbnail.jpg" \
+          -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+          -c:v libx264 -pix_fmt yuv420p -preset veryfast -maxrate 3000k -bufsize 6000k \
+          -framerate 25 -g 50 -c:a aac -shortest -f flv "${{ github.event.inputs.rtmp_url }}${{ github.event.inputs.stream_key }}"
+          
